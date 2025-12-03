@@ -1077,7 +1077,7 @@ public:
     Khat = Kleft * Kleft.transpose();
 
   }
-  void prepare_IS_K () {
+  void prepare_IS () {
     // IS matrix
     d2logdensity_dthetadtheta_scalar = d2logdensity_dthetadtheta();
     he_log_theta_scalar = he_log_theta();
@@ -1088,23 +1088,23 @@ public:
 
 
 
-    // Matrix K
-    K_alpha_f_mat = K_alpha_f();
-    K_betaR_mat = K_betaR();
-    K_betaF_mat = K_betaF();
-    K_log_theta_vec = K_log_theta();
+    // // Matrix K
+    // K_alpha_f_mat = K_alpha_f();
+    // K_betaR_mat = K_betaR();
+    // K_betaF_mat = K_betaF();
+    // K_log_theta_vec = K_log_theta();
 
-    Kleft.resize(kE+kbetaR+kbetaF+1, n);
-    Kleft.setZero();
+    // Kleft.resize(kE+kbetaR+kbetaF+1, n);
+    // Kleft.setZero();
 
-    Khat.resize(kE+kbetaR+kbetaF+1, kE+kbetaR+kbetaF+1);
+    // Khat.resize(kE+kbetaR+kbetaF+1, kE+kbetaR+kbetaF+1);
 
-    Kleft.block(0, 0, kE, n) = K_alpha_f_mat;
-    Kleft.block(kE,0, kbetaR,n) = K_betaR_mat;
-    Kleft.block(kE+kbetaR,0, kbetaF,n) = K_betaF_mat;
-    Kleft.row(kE+kbetaR+kbetaF) = K_log_theta_vec.transpose();
+    // Kleft.block(0, 0, kE, n) = K_alpha_f_mat;
+    // Kleft.block(kE,0, kbetaR,n) = K_betaR_mat;
+    // Kleft.block(kE+kbetaR,0, kbetaF,n) = K_betaF_mat;
+    // Kleft.row(kE+kbetaR+kbetaF) = K_log_theta_vec.transpose();
 
-    Khat = Kleft * Kleft.transpose();
+    // Khat = Kleft * Kleft.transpose();
   }
 
   Eigen::MatrixXd prepare_NCV (Eigen::VectorXd nei_vec) {

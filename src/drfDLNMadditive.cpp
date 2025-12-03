@@ -658,7 +658,7 @@ List NCVdrfDLNMadditive(SEXP ptr, const List nei_list, bool verbose = false, int
       modelobj.derivative_coef();
       modelobj.derivative_he();
       modelobj.derivative_full();
-      modelobj.prepare_IS_K();
+      modelobj.prepare_IS();
 
       
 
@@ -741,9 +741,16 @@ List NCVdrfDLNMadditive(SEXP ptr, const List nei_list, bool verbose = false, int
 
     Eigen::setNbThreads(1);
 
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel
+    {
+    
+    Model local_model(modelobj);  // one per thread
+    Eigen::VectorXd zjoint(kE+kbetaR+kbetaF + 1);
+    Eigen::VectorXd local_p_i_vec(MCR);
+    
+    #pragma omp for schedule(static)
     for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(N); ++i) {
-      Model local_model(modelobj);
+      // Model local_model(modelobj);
 
 
       std::mt19937 gen(123);
@@ -761,7 +768,7 @@ List NCVdrfDLNMadditive(SEXP ptr, const List nei_list, bool verbose = false, int
       local_model.derivative_coef();
       local_model.derivative_he();
       local_model.derivative_full();
-      local_model.prepare_IS_K();
+      local_model.prepare_IS();
 
       Eigen::MatrixXd local_Hlambdanei = local_model.IS_mat - local_model.prepare_NCV(nei_vecs[i]);
       Eigen::MatrixXd R_he_u_L_inv;
@@ -781,8 +788,6 @@ List NCVdrfDLNMadditive(SEXP ptr, const List nei_list, bool verbose = false, int
         R_he_u_L_inv = invertL(chol_L).transpose();
       }
 
-      Eigen::VectorXd zjoint(kE+kbetaR+kbetaF + 1);
-      Eigen::VectorXd local_p_i_vec(MCR);
       local_p_i_vec.setZero();
 
       for(int r = 0; r < MCR; r++) {
@@ -814,6 +819,7 @@ List NCVdrfDLNMadditive(SEXP ptr, const List nei_list, bool verbose = false, int
       }
     }
 
+    }
   }
 
   if(verbose) {
