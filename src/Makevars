@@ -1,0 +1,19 @@
+CXX_STD = CXX17
+PKG_CPPFLAGS = -I../src/include
+PKG_CPPFLAGS += -I../inst/include
+# PKG_CXXFLAGS += -DEIGEN_DONT_PARALLELIZE
+PKG_CXXFLAGS += -O3 -march=native -DNDEBUG -DEIGEN_DONT_PARALLELIZE
+
+UNAME := $(shell uname)
+
+
+ifeq ($(UNAME), Darwin)
+		# macOS
+    PKG_CPPFLAGS += -I/opt/homebrew/opt/libomp/include
+    PKG_CXXFLAGS += -Xpreprocessor -fopenmp
+    PKG_LIBS += -L/opt/homebrew/opt/libomp/lib -lomp
+else
+    # Linux (haven't test on Windows)
+    PKG_CXXFLAGS += -fopenmp
+    PKG_LIBS += -fopenmp
+endif
