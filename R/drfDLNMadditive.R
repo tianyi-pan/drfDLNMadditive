@@ -63,6 +63,7 @@ drfDLNMadditive <- function(formula,
                     CI = 0.95,
                     CI.R = 1000, CI.seed = 123,
                     eta = TRUE,
+                    tmp.file = NULL,
                     verbose = TRUE) {
 
 
@@ -828,6 +829,14 @@ drfDLNMadditive <- function(formula,
       cat("Finished calculating AIC. It took ", round(runningtime,5), " seconds.\n", sep = "")
     }
   }
+
+
+  if(!is.null(tmp.file)) {
+    out.tmp <- structure(out, class = "drfDLNMadditive_fit")
+    save(out.tmp, file = tmp.file)
+    cat("Temporary file saved to ", tmp.file, "\n")
+  }
+
 
   if(ifNCV) {
     if(verbose) {

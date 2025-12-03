@@ -800,7 +800,7 @@ List NCVdrfDLNMadditive(SEXP ptr, const List nei_list, bool verbose = false, int
 
         double R_log_theta_sample = samplejoint(kE+kbetaR+kbetaF);
 
-        double p_i = modelobj.get_p_i(R_alpha_f_sample, R_betaR_sample, R_betaF_sample, R_log_theta_sample, static_cast<int>(i));
+        double p_i = local_model.get_p_i(R_alpha_f_sample, R_betaR_sample, R_betaF_sample, R_log_theta_sample, static_cast<int>(i));
 
         local_p_i_vec(r) = p_i;
       }
