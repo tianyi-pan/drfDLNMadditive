@@ -63,6 +63,7 @@ drfDLNMadditive <- function(formula,
                     CI = 0.95,
                     CI.R = 1000, CI.seed = 123,
                     eta = TRUE,
+                    maxit.LAML = 150,
                     tmp.file = NULL,
                     verbose = TRUE) {
 
@@ -650,7 +651,8 @@ drfDLNMadditive <- function(formula,
                     method = "L-BFGS-B",
                     lower = lower.bound[!par.fix.id],
                     upper = upper.bound[!par.fix.id],
-                    control = list(trace = verbose),
+                    control = list(trace = verbose,
+                                   maxit = maxit.LAML),
                     hessian = hessian
   )
 
@@ -671,7 +673,8 @@ drfDLNMadditive <- function(formula,
                       method = "L-BFGS-B",
                       lower = lower.bound[!par.fix.id],
                       upper = upper.bound[!par.fix.id],
-                      control = list(trace = verbose),
+                      control = list(trace = verbose,
+                                     maxit = maxit.LAML),
                       hessian = hessian)
   }
 

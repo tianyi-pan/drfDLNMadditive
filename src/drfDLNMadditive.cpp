@@ -644,7 +644,7 @@ List NCVdrfDLNMadditive(SEXP ptr, const List nei_list, bool verbose = false, int
     std::mt19937 gen(123);
     std::normal_distribution<> dist(0, 1);
 
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigvec(Hlambdanei,true); // Both values and vectors
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigvec(Hlambdanei); // Both values and vectors
     Eigen::LLT<Eigen::MatrixXd> cholSolver(Hlambdanei);
     p_i_vec.setZero();
     Eigen::MatrixXd R_he_u_L_inv;
@@ -777,7 +777,7 @@ List NCVdrfDLNMadditive(SEXP ptr, const List nei_list, bool verbose = false, int
 
       Eigen::LLT<Eigen::MatrixXd> cholSolver(local_Hlambdanei);
       if(cholSolver.info()!=Eigen::Success) {
-        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigvec(local_Hlambdanei,true); // Both values and vectors
+        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigvec(local_Hlambdanei); // Both values and vectors
         Eigen::VectorXd eigvals = eigvec.eigenvalues().array();
         Eigen::VectorXd invabseigvals(eigvals.size());
         for (int ii = 0; ii < eigvals.size(); ii++) invabseigvals(ii) = 1. / max(abs(eigvals(ii)), 1e-3);
