@@ -6,12 +6,12 @@
 \usage{
 \method{summary}{drfDLNMadditive_fit}(
   object,
-  E.eval.list,
-  l.eval.list,
+  E.eval.list = NULL,
+  l.eval.list = NULL,
   others.eval = NULL,
   cen,
   plot = FALSE,
-  true.function,
+  true.function = NULL,
   ...
 )
 }

@@ -579,7 +579,9 @@ List NCVdrfDLNMadditive(SEXP ptr, const List nei_list, bool verbose = false, int
   Eigen::VectorXd beta_mod(kE+kbetaR+kbetaF+1);
   beta_mod << alpha_f, betaR, betaF, log_theta;
   Eigen::MatrixXd beta_nei(beta_mod.size(), nei_list.size());
-
+  modelobj.derivative_coef();
+  modelobj.derivative_he();
+  modelobj.derivative_full();
   modelobj.prepare_AIC(); // for gunpen_nei
   Eigen::MatrixXd Hpen = modelobj.IS_mat;
 
@@ -594,7 +596,7 @@ List NCVdrfDLNMadditive(SEXP ptr, const List nei_list, bool verbose = false, int
   Eigen::VectorXd Dnei(nei_list.size());
   Eigen::VectorXd Pnei(nei_list.size());
 
-
+  std::cout << "here4" << std::endl;
   // Eigen::VectorXd Dfull(nei_list.size());
   for (size_t i = 0; i < nei_list.size(); i++) {
     // Dfull(i) = modelobj.NegativeLogLikelihood_l_i(i);

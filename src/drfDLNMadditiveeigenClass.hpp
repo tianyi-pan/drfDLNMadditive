@@ -1137,11 +1137,11 @@ public:
 
       tmp.block(0,kE,kE,kbetaR) = he_alpha_f_betaR_i_mat;
       tmp.block(0,kE+kbetaR,kE,kbetaF) = he_alpha_f_betaF_i_mat;
-      tmp.block(kE+kbetaR, kE+kbetaR, kbetaR, kbetaF) = he_betaR_betaF_i_mat;
+      tmp.block(kE, kE+kbetaR, kbetaR, kbetaF) = he_betaR_betaF_i_mat;
 
       tmp.block(kE,0,kbetaR,kE) = he_alpha_f_betaR_i_mat.transpose();
       tmp.block(kE+kbetaR,0,kbetaF,kE) = he_alpha_f_betaF_i_mat.transpose();
-      tmp.block(kE+kbetaR, kE+kbetaR, kbetaF, kbetaR) = he_betaR_betaF_i_mat.transpose();
+      tmp.block(kE+kbetaR, kE, kbetaF, kbetaR) = he_betaR_betaF_i_mat.transpose();
 
       tmp.row(kE+kbetaR+kbetaF) << he_alpha_f_log_theta_i_vec.transpose(), he_betaR_log_theta_i_vec.transpose(), he_betaF_log_theta_i_vec.transpose(), he_log_theta_i(index_int);
       tmp.col(kE+kbetaR+kbetaF) = tmp.row(kE+kbetaR+kbetaF).transpose();
