@@ -29,6 +29,7 @@ drfDLNMadditive(
   CI.R = 1000,
   CI.seed = 123,
   eta = TRUE,
+  maxit.LAML = 150,
   tmp.file = NULL,
   verbose = TRUE
 )
