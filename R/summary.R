@@ -23,7 +23,7 @@ summary.drfDLNMadditive_fit <- function(object, E.eval.list = NULL, l.eval.list 
   kE <- object$data$kE
   sX.x.names.list <- object$data$sX.x.names.list
   if(missingArg(cen)) {
-    cen <- 3
+    cen <- rep(3, length(B_inner))
     # cat("set centering value as 3")
   }
   B_inner <- object$data$B_inner
@@ -64,7 +64,7 @@ summary.drfDLNMadditive_fit <- function(object, E.eval.list = NULL, l.eval.list 
                           l = l.eval)
 
     surface.mode <- apply(gridEl, 1, function(row.) {
-      sidDLNM:::SurfaceEval(row.[1], cen, row.[2], alpha_f,
+      sidDLNM:::SurfaceEval(row.[1], cen[i], row.[2], alpha_f,
                             object$data$SS.list[[i]]$SSf$knots,
                             object$data$SS.list[[i]]$Zf,
                             Blag)
@@ -77,7 +77,7 @@ summary.drfDLNMadditive_fit <- function(object, E.eval.list = NULL, l.eval.list 
 
 
     ## faster implementation in cpp
-    surface.sample <- sidDLNM:::SurfaceCI(as.matrix(gridEl), object$CI.sample$alpha_f_sample[,((i-1)*n_alpha_f/M + 1):(i*n_alpha_f/M)], cen,
+    surface.sample <- sidDLNM:::SurfaceCI(as.matrix(gridEl), object$CI.sample$alpha_f_sample[,((i-1)*n_alpha_f/M + 1):(i*n_alpha_f/M)], cen[i],
                                           object$data$SS.list[[i]]$SSf$knots,
                                           object$data$SS.list[[i]]$Zf, Blag)
 
