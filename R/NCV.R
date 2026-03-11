@@ -1,26 +1,17 @@
-#' Compute NCV
-#'
-#' @param object An object.
-#' @param ... Passed to methods.
-#' @export
-NCV <- function(object, ...) {
-  UseMethod("NCV")
-}
-
 #' Title Obtain NCV from the fitted model by drfDLNMadditive
 #'
 #' @param object object of class \code{drfDLNMadditive_fit}.
-#' @param kNCV 
-#' @param NCV.nthreads 
-#' @param verbose 
+#' @param kNCV
+#' @param NCV.nthreads
+#' @param verbose
 #' @param ...
 #'
-#' @export
+#' @exportS3Method mDLNM::NCV
 NCV.drfDLNMadditive_fit <- function(object, kNCV = 0, NCV.nthreads = 1, verbose = FALSE, ...) {
 
 
   dat <- object$inputdata
-   
+
 
 
 

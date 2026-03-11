@@ -2,16 +2,10 @@ Package: drfDLNMadditive
 Type: Package
 Title: Additive Distributed Response Function Distributed Lag Non-Linear Model
 Version: 0.1.0
-Authors@R: c(
-    person(
-      "Jane", "Doe",
-      email = "jane@example.com",
-      role = c("aut", "cre")
-    )
-  )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
-License: What license is it under?
+Author: Tianyi Pan
+Maintainer: Tianyi Pan <tianyi.pan@uwaterloo.ca>
+Description: Fit Additive DRF-DLNMs
+License: GPL (>= 3)
 Encoding: UTF-8
 Imports: 
     Rcpp (>= 1.0.12),
@@ -19,7 +13,8 @@ Imports:
     Matrix,
     mgcv,
 		ggplot2,
-		dplyr
+		dplyr,
+		mDLNM
 LinkingTo: Rcpp, RcppEigen
 LazyData: true
 RoxygenNote: 7.3.2

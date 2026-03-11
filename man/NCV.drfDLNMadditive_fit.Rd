@@ -9,12 +9,6 @@
 \arguments{
 \item{object}{object of class \code{drfDLNMadditive_fit}.}
 
-\item{kNCV}{}
-
-\item{NCV.nthreads}{}
-
-\item{verbose}{}
-
 \item{...}{}
 }
 \description{
