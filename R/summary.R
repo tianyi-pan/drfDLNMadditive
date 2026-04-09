@@ -53,7 +53,7 @@ summary.drfDLNMadditive_fit <- function(object, E.eval.list = NULL, l.eval.list 
       l.eval <- l.eval.list[[i]]
     }
 
-    Blag <- sapply(seq(0, maxL), function(l0) sidDLNM:::Bsplinevec2(l0, object$data$SS.list[[i]]$SSw$knots, 4))
+    Blag <- sapply(seq(0, maxL), function(l0) SIdrfDLNM:::Bsplinevec2(l0, object$data$SS.list[[i]]$SSw$knots, 4))
 
     if(!(Q1 %in% E.eval)) E.eval <- c(Q1, E.eval)
     if(!(Q3 %in% E.eval)) E.eval <- c(Q3, E.eval)
@@ -64,7 +64,7 @@ summary.drfDLNMadditive_fit <- function(object, E.eval.list = NULL, l.eval.list 
                           l = l.eval)
 
     surface.mode <- apply(gridEl, 1, function(row.) {
-      sidDLNM:::SurfaceEval(row.[1], cen[i], row.[2], alpha_f,
+      SIdrfDLNM:::SurfaceEval(row.[1], cen[i], row.[2], alpha_f,
                             object$data$SS.list[[i]]$SSf$knots,
                             object$data$SS.list[[i]]$Zf,
                             Blag)
@@ -77,7 +77,7 @@ summary.drfDLNMadditive_fit <- function(object, E.eval.list = NULL, l.eval.list 
 
 
     ## faster implementation in cpp
-    surface.sample <- sidDLNM:::SurfaceCI(as.matrix(gridEl), object$CI.sample$alpha_f_sample[,((i-1)*n_alpha_f/M + 1):(i*n_alpha_f/M)], cen[i],
+    surface.sample <- SIdrfDLNM:::SurfaceCI(as.matrix(gridEl), object$CI.sample$alpha_f_sample[,((i-1)*n_alpha_f/M + 1):(i*n_alpha_f/M)], cen[i],
                                           object$data$SS.list[[i]]$SSf$knots,
                                           object$data$SS.list[[i]]$Zf, Blag)
 
