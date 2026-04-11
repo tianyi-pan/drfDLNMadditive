@@ -27,7 +27,7 @@ RateRatio.drfDLNMadditive_fit <- function(object, x0, x1, verbose = FALSE, ...) 
     if (verbose) cat("Exposure", i, "\n")
     ## point estimate
     alpha_f <- object$point$alpha_f[((i-1)*n_alpha_f/M + 1):(i*n_alpha_f/M)]
-    Blag <- sapply(seq(0, maxL), function(l0) sidDLNM:::Bsplinevec2(l0, object$data$SS.list[[i]]$SSw$knots, 4))
+    Blag <- sapply(seq(0, maxL), function(l0) SIdrfDLNM:::Bsplinevec2(l0, object$data$SS.list[[i]]$SSw$knots, 4))
 
 
 
@@ -38,14 +38,14 @@ RateRatio.drfDLNMadditive_fit <- function(object, x0, x1, verbose = FALSE, ...) 
 
 
     eta.E.0 <- sum(apply(gridEl.x0, 1, function(row.) {
-      sidDLNM:::SurfaceEval(row.[1], cen, row.[2], alpha_f,
+      SIdrfDLNM:::SurfaceEval(row.[1], cen, row.[2], alpha_f,
                             object$data$SS.list[[i]]$SSf$knots,
                             object$data$SS.list[[i]]$Zf,
                             Blag)
     }))
 
     eta.E.1 <- sum(apply(gridEl.x1, 1, function(row.) {
-      sidDLNM:::SurfaceEval(row.[1], cen, row.[2], alpha_f,
+      SIdrfDLNM:::SurfaceEval(row.[1], cen, row.[2], alpha_f,
                             object$data$SS.list[[i]]$SSf$knots,
                             object$data$SS.list[[i]]$Zf,
                             Blag)
@@ -68,14 +68,14 @@ RateRatio.drfDLNMadditive_fit <- function(object, x0, x1, verbose = FALSE, ...) 
       alpha_f <- object$CI.sample$alpha_f_sample[j, ((i-1)*n_alpha_f/M + 1):(i*n_alpha_f/M)]
 
       eta.E.0 <- sum(apply(gridEl.x0, 1, function(row.) {
-        sidDLNM:::SurfaceEval(row.[1], cen, row.[2], alpha_f,
+        SIdrfDLNM:::SurfaceEval(row.[1], cen, row.[2], alpha_f,
                               object$data$SS.list[[i]]$SSf$knots,
                               object$data$SS.list[[i]]$Zf,
                               Blag)
       }))
 
       eta.E.1 <- sum(apply(gridEl.x1, 1, function(row.) {
-        sidDLNM:::SurfaceEval(row.[1], cen, row.[2], alpha_f,
+        SIdrfDLNM:::SurfaceEval(row.[1], cen, row.[2], alpha_f,
                               object$data$SS.list[[i]]$SSf$knots,
                               object$data$SS.list[[i]]$Zf,
                               Blag)
