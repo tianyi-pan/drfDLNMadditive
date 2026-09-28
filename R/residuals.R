@@ -12,6 +12,8 @@
 #' @import dplyr
 #' @import ggplot2
 #' @return a list containing the randomized quantile residuals and the plots.
+#'   Gaussian residuals are (y - mu) / theta, with theta the fitted SD;
+#'   no quantile randomization is used.
 #' @references Dunn, Peter K., and Gordon K. Smyth. \dQuote{Randomized quantile
 #'   residuals}. Journal of Computational and graphical statistics 5.3 (1996):
 #'   236-244.
@@ -25,7 +27,8 @@ residuals.drfDLNMadditive_fit <- function(object, seed = 123, plot = FALSE,
   # x <- object$modeldata$x
   t <- object$modeldata$t
 
-  mu <- exp(eta)
+  gaussian <- identical(object$family, "gaussian")
+  mu <- if (gaussian) eta else exp(eta)
   theta <- exp(object$point$log_theta) # theta
   if(length(y) > nsample) {
     sample.id <- sample(1:length(y), nsample)
@@ -34,14 +37,19 @@ residuals.drfDLNMadditive_fit <- function(object, seed = 123, plot = FALSE,
   }
 
 
-  rqr <- mapply(function(yi, mui){
-    ai <- pnbinom(yi-1, size = theta, mu = mui)
-    bi <- pnbinom(yi, size = theta, mu = mui)
-    ui <- runif(1, min = ai, max = bi)
-    ri <- qnorm(ui)
-    return(ri)
-  },
-  y[sample.id], mu[sample.id])
+  if(gaussian) {
+    rqr <- (y[sample.id] - mu[sample.id]) / theta
+  } else {
+    rqr <- mapply(function(yi, mui){
+      ai <- pnbinom(yi-1, size = theta, mu = mui)
+      bi <- pnbinom(yi, size = theta, mu = mui)
+      ui <- runif(1, min = ai, max = bi)
+      ri <- qnorm(ui)
+      return(ri)
+    },
+    y[sample.id], mu[sample.id])
+  }
+
 
   out <- list(res = data.frame(rqr = rqr,
                                y = y[sample.id],

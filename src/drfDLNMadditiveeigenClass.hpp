@@ -280,6 +280,8 @@ private:
 
 public:
 
+  const bool gaussian;
+
   // DATA
   int n;
   int kE;
@@ -498,8 +500,9 @@ public:
         const Eigen::VectorXd& log_smoothing_w_,
         Eigen::VectorXd& betaR_,
         Eigen::VectorXd& betaF_,
-        Eigen::VectorXd& logsmoothing_):
-    y(y_), B_inner_list(B_inner_list_), knots_f_list(knots_f_list_), knots_w_list(knots_w_list_), Sw_list(Sw_list_), SwR_list(SwR_list_), Sf_list(Sf_list_), SfR_list(SfR_list_), Xrand(Xrand_), Xfix(Xfix_), Zf_list(Zf_list_), Xoffset(Xoffset_), r(r_),
+        Eigen::VectorXd& logsmoothing_,
+        bool gaussian_ = false):
+    gaussian(gaussian_), y(y_), B_inner_list(B_inner_list_), knots_f_list(knots_f_list_), knots_w_list(knots_w_list_), Sw_list(Sw_list_), SwR_list(SwR_list_), Sf_list(Sf_list_), SfR_list(SfR_list_), Xrand(Xrand_), Xfix(Xfix_), Zf_list(Zf_list_), Xoffset(Xoffset_), r(r_),
     alpha_f(alpha_f_), log_theta(log_theta_), log_smoothing_f(log_smoothing_f_), log_smoothing_w(log_smoothing_w_), betaR(betaR_), betaF(betaF_), logsmoothing(logsmoothing_) {
 
       n = y.size(); // sample size
@@ -573,7 +576,7 @@ public:
         Bf_matrix.row(i) = Bf;
         eta(i) = Bf.dot(alpha_f);
         eta_remaining(i) = Xfix.row(i).dot(betaF) + Xrand.row(i).dot(betaR);
-        mu(i) = exp(eta(i) + eta_remaining(i) + Xoffset(i));
+        mu(i) = gaussian ? eta(i) + eta_remaining(i) + Xoffset(i) : exp(eta(i) + eta_remaining(i) + Xoffset(i));
       }
 
       // END Bf_matrix and eta
@@ -630,7 +633,7 @@ public:
 
     for (int i = 0; i < n; i++) {
       eta(i) = Bf_matrix.row(i).dot(alpha_f);
-      mu(i) = exp(eta(i) + eta_remaining(i) + Xoffset(i));
+      mu(i) = gaussian ? eta(i) + eta_remaining(i) + Xoffset(i) : exp(eta(i) + eta_remaining(i) + Xoffset(i));
     }
   }
 
@@ -641,14 +644,14 @@ public:
     betaF = betaF_;
     for (int i = 0; i < n; i++) {
       eta_remaining(i) = Xfix.row(i).dot(betaF) + Xrand.row(i).dot(betaR);
-      mu(i) = exp(eta(i) + eta_remaining(i) + Xoffset(i));
+      mu(i) = gaussian ? eta(i) + eta_remaining(i) + Xoffset(i) : exp(eta(i) + eta_remaining(i) + Xoffset(i));
     }
   }
   void setBetaR(const Eigen::VectorXd betaR_) {
     betaR = betaR_;
     for (int i = 0; i < n; i++) {
       eta_remaining(i) = Xfix.row(i).dot(betaF) + Xrand.row(i).dot(betaR);
-      mu(i) = exp(eta(i) + eta_remaining(i) + Xoffset(i));
+      mu(i) = gaussian ? eta(i) + eta_remaining(i) + Xoffset(i) : exp(eta(i) + eta_remaining(i) + Xoffset(i));
     }
   }
   void setLogTheta(const double log_theta_) {
@@ -709,10 +712,10 @@ public:
       // Bf_matrix.row(i) = Bf;
       double eta_i = Bf_matrix.row(i).dot(alpha_f_i);
       double eta_remaining_i = Xfix.row(i).dot(betaF_i) + Xrand.row(i).dot(betaR_i);
-      double mu_i = exp(eta_i + eta_remaining_i + Xoffset(i));
+      double mu_i = gaussian ? eta_i + eta_remaining_i + Xoffset(i) : exp(eta_i + eta_remaining_i + Xoffset(i));
 
       double theta_i = exp(log_theta_i);
-      double log_p_i = lgamma(y(i) + theta_i) - lgamma(theta_i) - lgamma(y(i) + 1) -
+      double log_p_i = gaussian ? -log_theta_i - 0.5 * log(2.0 * acos(-1.0)) - pow(y(i) - mu_i, 2) / (2.0 * theta_i * theta_i) : lgamma(y(i) + theta_i) - lgamma(theta_i) - lgamma(y(i) + 1) -
                                     theta_i * log(1 + mu_i/theta_i) +
                                     y(i)*( eta_i + eta_remaining_i + Xoffset(i) - log_theta_i - log(1 + mu_i/theta_i) );
       return exp(log_p_i);
@@ -726,10 +729,10 @@ public:
       // Bf_matrix.row(i) = Bf;
       double eta_i = Bf_matrix.row(i).dot(alpha_f_i);
       double eta_remaining_i = Xfix.row(i).dot(betaF_i) + Xrand.row(i).dot(betaR_i);
-      double mu_i = exp(eta_i + eta_remaining_i + Xoffset(i));
+      double mu_i = gaussian ? eta_i + eta_remaining_i + Xoffset(i) : exp(eta_i + eta_remaining_i + Xoffset(i));
 
       double theta_i = exp(log_theta_i);
-      double log_p_i = lgamma(y(i) + theta_i) - lgamma(theta_i) - lgamma(y(i) + 1) -
+      double log_p_i = gaussian ? -log_theta_i - 0.5 * log(2.0 * acos(-1.0)) - pow(y(i) - mu_i, 2) / (2.0 * theta_i * theta_i) : lgamma(y(i) + theta_i) - lgamma(theta_i) - lgamma(y(i) + 1) -
                                     theta_i * log(1 + mu_i/theta_i) +
                                     y(i)*( eta_i + eta_remaining_i + Xoffset(i) - log_theta_i - log(1 + mu_i/theta_i) );
       return -1.0*log_p_i; // loss function negative log likelihood
@@ -993,7 +996,7 @@ public:
 
     double loglik = 0;
     for (int i = 0; i < n; i++) {
-      loglik += lgamma(y(i) + theta) - lgamma(theta) - lgamma(y(i) + 1) -
+      loglik += gaussian ? -log_theta - 0.5 * log(2.0 * acos(-1.0)) - pow(y(i) - mu(i), 2) / (2.0 * theta * theta) : lgamma(y(i) + theta) - lgamma(theta) - lgamma(y(i) + 1) -
                                     theta * log(1 + mu(i)/theta) +
                                     y(i)*( eta(i) + eta_remaining(i) + Xoffset(i) - log_theta - log(1 + mu(i)/theta) );
     }
@@ -1026,7 +1029,7 @@ public:
 
     double loglik = 0;
     for (int i = 0; i < n; i++) {
-      loglik += lgamma(y(i) + theta) - lgamma(theta) - lgamma(y(i) + 1) -
+      loglik += gaussian ? -log_theta - 0.5 * log(2.0 * acos(-1.0)) - pow(y(i) - mu(i), 2) / (2.0 * theta * theta) : lgamma(y(i) + theta) - lgamma(theta) - lgamma(y(i) + 1) -
                                     theta * log(1 + mu(i)/theta) +
                                     y(i)*( eta(i) + eta_remaining(i) + Xoffset(i) - log_theta - log(1 + mu(i)/theta) );
     }
@@ -1159,6 +1162,7 @@ public:
   // 1. density function
   // d log(exponential family density) / d mu
   Eigen::VectorXd dlogdensity_dmu () {
+    if (gaussian) return (y - mu) / (theta * theta);
     Eigen::VectorXd out(n);
     for (int i = 0; i < n; i++) {
       out(i) = y(i) / mu(i) - (theta + y(i)) / (theta + mu(i));
@@ -1167,6 +1171,7 @@ public:
   }
   // d^2 log(exponential family density) / d mu d log_theta
   Eigen::VectorXd d2logdensity_dmudlog_theta () {
+    if (gaussian) return -2.0 * (y - mu) / (theta * theta);
     Eigen::VectorXd out(n);
     for (int i = 0; i < n; i++) {
       out(i) = theta * ((theta + y(i)) / pow(theta + mu(i), 2) - 1.0 / (theta + mu(i)));
@@ -1176,6 +1181,7 @@ public:
 
   // d^2 log(exponential family density) / d mu^2
   Eigen::VectorXd d2logdensity_dmudmu () {
+    if (gaussian) return Eigen::VectorXd::Constant(n, -1.0 / (theta * theta));
     Eigen::VectorXd out(n);
     for (int i = 0; i < n; i++) {
       out(i) = - y(i) / pow(mu(i), 2) + (theta + y(i)) / pow(theta + mu(i), 2);
@@ -1184,6 +1190,7 @@ public:
   }
   // d^3 log(exponential family density) / d mu^2 d log_theta
   Eigen::VectorXd d3logdensity_dmudmudlog_theta () {
+    if (gaussian) return Eigen::VectorXd::Constant(n, 2.0 / (theta * theta));
     Eigen::VectorXd out(n);
     for (int i = 0; i < n; i++) {
       out(i) = theta * (1 / pow(theta + mu(i), 2) - 2.0 * (theta + y(i)) / pow(theta + mu(i), 3));
@@ -1192,6 +1199,7 @@ public:
   }
 
   Eigen::VectorXd d3logdensity_dmudmudmu () {
+    if (gaussian) return Eigen::VectorXd::Zero(n);
     Eigen::VectorXd out(n);
     for (int i = 0; i < n; i++) {
       out(i) = 2.0 * y(i) / pow(mu(i), 3) - 2.0 * (theta + y(i)) / pow(theta + mu(i), 3);
@@ -1201,6 +1209,7 @@ public:
 
   // d log(exponential family density) / d theta
   double dlogdensity_dtheta () {
+    if (gaussian) return -n / theta + (y - mu).squaredNorm() / pow(theta, 3);
     double out = 0.0;
     // std::cout << "x" << 3.5 << std::endl;
 
@@ -1212,6 +1221,7 @@ public:
   }
   // d^2 log(exponential family density) / d theta^2
   double d2logdensity_dthetadtheta () {
+    if (gaussian) return n / (theta * theta) - 3.0 * (y - mu).squaredNorm() / pow(theta, 4);
     double out = 0.0;
 
     for (int i = 0; i < n; i++) {
@@ -1222,6 +1232,7 @@ public:
 
 
   Eigen::VectorXd d2logdensity_dmudtheta () {
+    if (gaussian) return -2.0 * (y - mu) / pow(theta, 3);
     Eigen::VectorXd out(n);
     for (int i = 0; i < n; i++) {
       out(i) = (y(i) - mu(i)) / pow(theta+mu(i), 2);
@@ -1238,6 +1249,7 @@ public:
   }
   // d mu / d alpha_f
   Eigen::MatrixXd dmu_df () {
+    if (gaussian) return dlogmu_df_mat;
     Eigen::MatrixXd out(n, kE);
     for (int i = 0; i < n; i++) {
       out.row(i) = dlogmu_df_mat.row(i) * mu(i);
@@ -1251,6 +1263,7 @@ public:
   }
   // d mu / d betaR
   Eigen::MatrixXd dmu_dbetaR () {
+    if (gaussian) return dlogmu_dbetaR_mat;
     Eigen::MatrixXd out(n, kbetaR);
     for (int i = 0; i < n; i++) {
       out.row(i) = dlogmu_dbetaR_mat.row(i) * mu(i);
@@ -1263,6 +1276,7 @@ public:
   }
   // d mu / d betaR
   Eigen::MatrixXd dmu_dbetaF () {
+    if (gaussian) return dlogmu_dbetaF_mat;
     Eigen::MatrixXd out(n, kbetaF);
     for (int i = 0; i < n; i++) {
       out.row(i) = dlogmu_dbetaF_mat.row(i) * mu(i);
@@ -1361,6 +1375,7 @@ public:
 
 
   Eigen::VectorXd K_log_theta () {
+    if (gaussian) return ((y - mu).array().square() / (theta * theta) - 1.0).matrix();
     // out: n * 1. DO NOT FORGET TO TRANSPOSE WHEN USING
     Eigen::VectorXd out(n);
     for (int i = 0; i < n; i++) {
@@ -1389,6 +1404,7 @@ public:
     return -1.0 * theta * dlogdensity_dtheta_scalar - theta * theta * d2logdensity_dthetadtheta_scalar;
   }
   double he_log_theta_i (int i) {
+    if (gaussian) return 2.0 * pow(y(i) - mu(i), 2) / (theta * theta);
     double tmp1 = log_theta - log(theta + mu(i)) + (mu(i) - y(i))/(theta+mu(i)) + lgamma1st(theta+y(i)) - lgamma1st(theta);
     double tmp2 = 1/theta - 1/(theta + mu(i)) - (mu(i) - y(i)) / ((theta + mu(i))*(theta + mu(i))) + lgamma2nd(y(i) + theta) - lgamma2nd(theta);
     return -1.0 * theta * tmp1 - theta * theta * tmp2;
@@ -1439,7 +1455,7 @@ public:
     outpen.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d2logdensity_dmudmu_vec(i) * dmu_df_mat.row(i).transpose() * dmu_df_mat.row(i);
-      out2 += dlogdensity_dmu_vec(i) * (mu(i) * dlogmu_df_mat.row(i).transpose() * dlogmu_df_mat.row(i));
+      out2 += (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * (mu(i) * dlogmu_df_mat.row(i).transpose() * dlogmu_df_mat.row(i));
     }
 
     for (int i = 0; i < mE; i++) outpen.block(i*kEp, i*kEp, kEp, kEp) = smoothing_f(i)*Sf_list.at(i) + smoothing_w(i)*Sw_list.at(i);
@@ -1455,7 +1471,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d3logdensity_dmudmudlog_theta_vec(i) * dmu_df_mat.row(i).transpose() * dmu_df_mat.row(i);
-      out2 += d2logdensity_dmudlog_theta_vec(i) * (mu(i) * dlogmu_df_mat.row(i).transpose() * dlogmu_df_mat.row(i));
+      out2 += (gaussian ? 0.0 : d2logdensity_dmudlog_theta_vec(i)) * (mu(i) * dlogmu_df_mat.row(i).transpose() * dlogmu_df_mat.row(i));
     }
     Eigen::MatrixXd out = - out1 - out2;
     // Eigen::Map<const Eigen::VectorXd> vA(mat.data(), mat.size());
@@ -1465,6 +1481,7 @@ public:
 
   // third derivatives wrt alpha_f
   Eigen::VectorXd Tri_alpha_f (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kE);
     // std::vector<Eigen::MatrixXd> out;
     Eigen::VectorXd out(kE);
     double out1;
@@ -1516,6 +1533,7 @@ public:
 
   // d^3 L / d alpha_f d alpha_f d betaR
   Eigen::VectorXd Tri_alpha_f2_betaR (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaR);
     Eigen::VectorXd out(kbetaR);
     double out1;
 
@@ -1561,6 +1579,7 @@ public:
   }
   // d^3 L / d alpha_f d alpha_f d betaF
   Eigen::VectorXd Tri_alpha_f2_betaF (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaF);
     Eigen::VectorXd out(kbetaF);
     double out1;
     if(nThreads > 1) {
@@ -1612,7 +1631,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d2logdensity_dmudmu_vec(i) * dmu_df_mat.row(i).transpose() * dmu_df_mat.row(i);
-      out2 += dlogdensity_dmu_vec(i) * (mu(i) * dlogmu_df_mat.row(i).transpose() * dlogmu_df_mat.row(i));
+      out2 += (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * (mu(i) * dlogmu_df_mat.row(i).transpose() * dlogmu_df_mat.row(i));
     }
     return - out1 - out2;
   }
@@ -1622,7 +1641,7 @@ public:
     Eigen::MatrixXd out2(kE, kE);
 
     out1 = d2logdensity_dmudmu_vec(i) * dmu_df_mat.row(i).transpose() * dmu_df_mat.row(i);
-    out2 = dlogdensity_dmu_vec(i) * (mu(i) * dlogmu_df_mat.row(i).transpose() * dlogmu_df_mat.row(i));
+    out2 = (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * (mu(i) * dlogmu_df_mat.row(i).transpose() * dlogmu_df_mat.row(i));
 
     return - out1 - out2;
   }
@@ -1636,7 +1655,7 @@ public:
     Ones.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d2logdensity_dmudmu_vec(i) * dmu_dbetaR_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
-      out2 += dlogdensity_dmu_vec(i) * (mu(i) * dlogmu_dbetaR_mat.row(i).transpose() * dlogmu_dbetaR_mat.row(i));
+      out2 += (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * (mu(i) * dlogmu_dbetaR_mat.row(i).transpose() * dlogmu_dbetaR_mat.row(i));
     }
     int begin = 0;
     for (int i = 0; i < p; i++) {
@@ -1655,7 +1674,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d3logdensity_dmudmudlog_theta_vec(i) * dmu_dbetaR_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
-      out2 += d2logdensity_dmudlog_theta_vec(i) * (mu(i) * dlogmu_dbetaR_mat.row(i).transpose() * dlogmu_dbetaR_mat.row(i));
+      out2 += (gaussian ? 0.0 : d2logdensity_dmudlog_theta_vec(i)) * (mu(i) * dlogmu_dbetaR_mat.row(i).transpose() * dlogmu_dbetaR_mat.row(i));
     }
     Eigen::MatrixXd out = - out1 - out2;
     // Eigen::Map<const Eigen::VectorXd> vA(mat.data(), mat.size());
@@ -1665,6 +1684,7 @@ public:
   }
 
   Eigen::VectorXd Tri_betaR (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaR);
     Eigen::VectorXd out(kbetaR);
     double out1;
     if (nThreads > 1) {
@@ -1712,6 +1732,7 @@ public:
 
   // d^3 L / d betaR d betaR d alpha_f
   Eigen::VectorXd Tri_betaR2_alpha_f (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kE);
     Eigen::VectorXd out(kE);
     double out1;
     if(nThreads > 1) {
@@ -1760,6 +1781,7 @@ public:
 
   // d^3 L / d betaR d betaR d betaF
   Eigen::VectorXd Tri_betaR2_betaF (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaF);
     Eigen::VectorXd out(kbetaF);
     double out1;
     if (nThreads > 1) {
@@ -1814,7 +1836,7 @@ public:
     Ones.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d2logdensity_dmudmu_vec(i) * dmu_dbetaR_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
-      out2 += dlogdensity_dmu_vec(i) * (mu(i) * dlogmu_dbetaR_mat.row(i).transpose() * dlogmu_dbetaR_mat.row(i));
+      out2 += (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * (mu(i) * dlogmu_dbetaR_mat.row(i).transpose() * dlogmu_dbetaR_mat.row(i));
     }
     return - out1 - out2;
   }
@@ -1824,7 +1846,7 @@ public:
     Eigen::MatrixXd out2(kbetaR, kbetaR);
 
     out1 = d2logdensity_dmudmu_vec(i) * dmu_dbetaR_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
-    out2 = dlogdensity_dmu_vec(i) * (mu(i) * dlogmu_dbetaR_mat.row(i).transpose() * dlogmu_dbetaR_mat.row(i));
+    out2 = (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * (mu(i) * dlogmu_dbetaR_mat.row(i).transpose() * dlogmu_dbetaR_mat.row(i));
 
     return - out1 - out2;
   }
@@ -1836,7 +1858,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d2logdensity_dmudmu_vec(i) * dmu_dbetaF_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
-      out2 += dlogdensity_dmu_vec(i) * (mu(i) * dlogmu_dbetaF_mat.row(i).transpose() * dlogmu_dbetaF_mat.row(i));
+      out2 += (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * (mu(i) * dlogmu_dbetaF_mat.row(i).transpose() * dlogmu_dbetaF_mat.row(i));
     }
     return - out1 - out2;
   }
@@ -1849,7 +1871,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d3logdensity_dmudmudlog_theta_vec(i) * dmu_dbetaF_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
-      out2 += d2logdensity_dmudlog_theta_vec(i) * (mu(i) * dlogmu_dbetaF_mat.row(i).transpose() * dlogmu_dbetaF_mat.row(i));
+      out2 += (gaussian ? 0.0 : d2logdensity_dmudlog_theta_vec(i)) * (mu(i) * dlogmu_dbetaF_mat.row(i).transpose() * dlogmu_dbetaF_mat.row(i));
     }
     Eigen::MatrixXd out = - out1 - out2;
     // Eigen::Map<const Eigen::VectorXd> vA(mat.data(), mat.size());
@@ -1860,6 +1882,7 @@ public:
 
 
   Eigen::VectorXd Tri_betaF (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaF);
     Eigen::VectorXd out(kbetaF);
     double out1;
     if (nThreads > 1) {
@@ -1910,6 +1933,7 @@ public:
 
   // d^3 L / d betaF d betaF d alpha_f
   Eigen::VectorXd Tri_betaF2_alpha_f (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kE);
     Eigen::VectorXd out(kE);
     double out1;
     if (nThreads > 1) {
@@ -1958,6 +1982,7 @@ public:
 
   // d^3 L / d betaF d betaF d betaR
   Eigen::VectorXd Tri_betaF2_betaR (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaR);
     Eigen::VectorXd out(kbetaR);
     double out1;
     if (nThreads > 1) {
@@ -2006,7 +2031,7 @@ public:
     Eigen::MatrixXd out2(kbetaF, kbetaF);
 
     out1 = d2logdensity_dmudmu_vec(i) * dmu_dbetaF_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
-    out2 = dlogdensity_dmu_vec(i) * (mu(i) * dlogmu_dbetaF_mat.row(i).transpose() * dlogmu_dbetaF_mat.row(i));
+    out2 = (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * (mu(i) * dlogmu_dbetaF_mat.row(i).transpose() * dlogmu_dbetaF_mat.row(i));
 
     return - out1 - out2;
   }
@@ -2019,7 +2044,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d2logdensity_dmudmu_vec(i) * dmu_df_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
-      out2 += dlogdensity_dmu_vec(i) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
+      out2 += (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
     }
     return - out1 - out2;
   }
@@ -2031,7 +2056,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d3logdensity_dmudmudlog_theta_vec(i) * dmu_df_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
-      out2 += d2logdensity_dmudlog_theta_vec(i) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
+      out2 += (gaussian ? 0.0 : d2logdensity_dmudlog_theta_vec(i)) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
     }
     Eigen::MatrixXd out = - out1 - out2;
     // Eigen::Map<const Eigen::VectorXd> vA(mat.data(), mat.size());
@@ -2041,6 +2066,7 @@ public:
   }
 
   Eigen::VectorXd Tri_alpha_f_betaF_alpha_f (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kE);
     Eigen::VectorXd out(kE);
     double out1;
     if (nThreads > 1) {
@@ -2086,6 +2112,7 @@ public:
   }
 
   Eigen::VectorXd Tri_alpha_f_betaF_betaR (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaR);
     Eigen::VectorXd out(kbetaR);
     double out1;
     if (nThreads > 1) {
@@ -2132,6 +2159,7 @@ public:
 
 
   Eigen::VectorXd Tri_alpha_f_betaF_betaF (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaF);
     Eigen::VectorXd out(kbetaF);
     double out1;
     if (nThreads > 1) {
@@ -2180,7 +2208,7 @@ public:
     Eigen::MatrixXd out1(kE, kbetaF);
     Eigen::MatrixXd out2(kE, kbetaF);
     out1 = d2logdensity_dmudmu_vec(i) * dmu_df_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
-    out2 = dlogdensity_dmu_vec(i) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
+    out2 = (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
 
     return - out1 - out2;
   }
@@ -2192,7 +2220,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d2logdensity_dmudmu_vec(i) * dmu_df_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
-      out2 += dlogdensity_dmu_vec(i) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
+      out2 += (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
     }
     return - out1 - out2;
   }
@@ -2205,7 +2233,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d3logdensity_dmudmudlog_theta_vec(i) * dmu_df_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
-      out2 += d2logdensity_dmudlog_theta_vec(i) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
+      out2 += (gaussian ? 0.0 : d2logdensity_dmudlog_theta_vec(i)) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
     }
     Eigen::MatrixXd out = - out1 - out2;
     // Eigen::Map<const Eigen::VectorXd> vA(mat.data(), mat.size());
@@ -2215,6 +2243,7 @@ public:
   }
 
   Eigen::VectorXd Tri_alpha_f_betaR_alpha_f (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kE);
     Eigen::VectorXd out(kE);
     double out1;
     if (nThreads > 1) {
@@ -2260,6 +2289,7 @@ public:
   }
 
   Eigen::VectorXd Tri_alpha_f_betaR_betaR (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaR);
     Eigen::VectorXd out(kbetaR);
     double out1;
     if (nThreads > 1) {
@@ -2305,6 +2335,7 @@ public:
   }
 
   Eigen::VectorXd Tri_alpha_f_betaR_betaF (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaF);
     Eigen::VectorXd out(kbetaF);
     double out1;
     if (nThreads > 1) {
@@ -2355,7 +2386,7 @@ public:
     Eigen::MatrixXd out2(kE, kbetaR);
 
     out1 = d2logdensity_dmudmu_vec(i) * dmu_df_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
-    out2 = dlogdensity_dmu_vec(i) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
+    out2 = (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * dlogmu_df_mat.row(i).transpose() * dmu_dbetaR_mat.row(i);
 
     return - out1 - out2;
   }
@@ -2368,7 +2399,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d2logdensity_dmudmu_vec(i) * dmu_dbetaR_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
-      out2 += dlogdensity_dmu_vec(i) * dlogmu_dbetaR_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
+      out2 += (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * dlogmu_dbetaR_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
     }
     return - out1 - out2;
   }
@@ -2380,7 +2411,7 @@ public:
     out2.setZero();
     for (int i = 0; i < n; i++) {
       out1 += d3logdensity_dmudmudlog_theta_vec(i) * dmu_dbetaR_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
-      out2 += d2logdensity_dmudlog_theta_vec(i) * dlogmu_dbetaR_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
+      out2 += (gaussian ? 0.0 : d2logdensity_dmudlog_theta_vec(i)) * dlogmu_dbetaR_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
     }
     Eigen::MatrixXd out = - out1 - out2;
     // Eigen::Map<const Eigen::VectorXd> vA(mat.data(), mat.size());
@@ -2391,6 +2422,7 @@ public:
 
 
   Eigen::VectorXd Tri_betaR_betaF_alpha_f (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kE);
     Eigen::VectorXd out(kE);
     double out1;
     if (nThreads > 1) {
@@ -2436,6 +2468,7 @@ public:
   }
 
   Eigen::VectorXd Tri_betaR_betaF_betaR (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaR);
     Eigen::VectorXd out(kbetaR);
     double out1;
     if (nThreads > 1) {
@@ -2481,6 +2514,7 @@ public:
   }
 
   Eigen::VectorXd Tri_betaR_betaF_betaF (int nThreads) {
+    if (gaussian) return Eigen::VectorXd::Zero(kbetaF);
     Eigen::VectorXd out(kbetaF);
     double out1;
     if (nThreads > 1) {
@@ -2529,7 +2563,7 @@ public:
     Eigen::MatrixXd out1(kbetaR, kbetaF);
     Eigen::MatrixXd out2(kbetaR, kbetaF);
     out1 = d2logdensity_dmudmu_vec(i) * dmu_dbetaR_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
-    out2 = dlogdensity_dmu_vec(i) * dlogmu_dbetaR_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
+    out2 = (gaussian ? 0.0 : dlogdensity_dmu_vec(i)) * dlogmu_dbetaR_mat.row(i).transpose() * dmu_dbetaF_mat.row(i);
 
     return - out1 - out2;
   }

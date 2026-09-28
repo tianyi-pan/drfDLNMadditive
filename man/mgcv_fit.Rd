@@ -4,10 +4,14 @@
 \alias{mgcv_fit}
 \title{Title fit a DRFDLNM using mgcv}
 \usage{
-mgcv_fit(formula.list, x.names.list, sXdat, kE, kw, verbose)
+mgcv_fit(formula.list, x.names.list, sXdat, kE, kw, verbose, family = "nb", maxL.gaussian = 14)
 }
 \arguments{
 \item{verbose}{}
+
+\item{family}{Outcome family, \code{"nb"} or \code{"gaussian"}.}
+
+\item{maxL.gaussian}{Maximum lag for Gaussian initialization, default 14.}
 }
 \description{
 Title fit a DRFDLNM using mgcv

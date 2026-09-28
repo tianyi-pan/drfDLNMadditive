@@ -5,6 +5,8 @@
 #' @param CI.seed random seed for sampling, default \code{123}.
 #' @param CI confidence level, default \code{0.95}.
 #' @param ...
+#' @details Predictions are on the log-mean scale for negative binomial fits
+#'   and the mean scale for Gaussian fits. 
 #'
 #' @export
 predict.drfDLNMadditive_fit <- function(object, dat, CI.seed = 123, CI = 0.95, ...) {
@@ -279,7 +281,8 @@ predict.drfDLNMadditive_fit <- function(object, dat, CI.seed = 123, CI = 0.95, .
   ### END following https://github.com/awstringer1/mam/blob/master/R/mam.R #######
 
 
-  Xoffset <- object$data$offset$Xoffset
+  gaussian <- identical(object$family, "gaussian")
+  Xoffset <- if (gaussian) rep(0, nrow(sXdat)) else object$data$offset$Xoffset
 
 
 
@@ -302,7 +305,7 @@ predict.drfDLNMadditive_fit <- function(object, dat, CI.seed = 123, CI = 0.95, .
                                     Xoffset, r,
                                     object$point$alpha_f,
                                     object$point$log_theta, object$point$log_smoothing_f, object$point$log_smoothing_w,
-                                    object$point$betaR, object$point$betaF, object$point$log_smoothing)
+                                    object$point$betaR, object$point$betaF, object$point$log_smoothing, gaussian)
 
   mod.address <- mod.build$address.eigen
 

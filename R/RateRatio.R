@@ -7,6 +7,9 @@
 #' @importFrom mgcv s
 #' @exportS3Method mDLNM::RateRatio
 RateRatio.drfDLNMadditive_fit <- function(object, x0, x1, verbose = FALSE, ...) {
+  if (identical(object$family, "gaussian")) {
+    stop("Rate ratios are not defined for Gaussian identity-link models.")
+  }
 
 
   pc <- object$data$pc

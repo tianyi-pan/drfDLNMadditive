@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // drfDLNMadditivebuild
-List drfDLNMadditivebuild(const Eigen::VectorXd R_y, const List R_B_inner_list, const List R_knots_f_list, const List R_knots_w_list, const List R_Sw_list, const List R_SwR_list, const List R_Sf_list, const List R_SfR_list, const Eigen::MatrixXd R_Xrand, const Eigen::MatrixXd R_Xfix, const List R_Zf_list, const Eigen::VectorXd R_Xoffset, const Eigen::VectorXd R_r, Eigen::VectorXd R_alpha_f, double R_log_theta, Eigen::VectorXd R_log_smoothing_f, Eigen::VectorXd R_log_smoothing_w, Eigen::VectorXd R_betaR, Eigen::VectorXd R_betaF, Eigen::VectorXd R_logsmoothing);
-RcppExport SEXP _drfDLNMadditive_drfDLNMadditivebuild(SEXP R_ySEXP, SEXP R_B_inner_listSEXP, SEXP R_knots_f_listSEXP, SEXP R_knots_w_listSEXP, SEXP R_Sw_listSEXP, SEXP R_SwR_listSEXP, SEXP R_Sf_listSEXP, SEXP R_SfR_listSEXP, SEXP R_XrandSEXP, SEXP R_XfixSEXP, SEXP R_Zf_listSEXP, SEXP R_XoffsetSEXP, SEXP R_rSEXP, SEXP R_alpha_fSEXP, SEXP R_log_thetaSEXP, SEXP R_log_smoothing_fSEXP, SEXP R_log_smoothing_wSEXP, SEXP R_betaRSEXP, SEXP R_betaFSEXP, SEXP R_logsmoothingSEXP) {
+List drfDLNMadditivebuild(const Eigen::VectorXd R_y, const List R_B_inner_list, const List R_knots_f_list, const List R_knots_w_list, const List R_Sw_list, const List R_SwR_list, const List R_Sf_list, const List R_SfR_list, const Eigen::MatrixXd R_Xrand, const Eigen::MatrixXd R_Xfix, const List R_Zf_list, const Eigen::VectorXd R_Xoffset, const Eigen::VectorXd R_r, Eigen::VectorXd R_alpha_f, double R_log_theta, Eigen::VectorXd R_log_smoothing_f, Eigen::VectorXd R_log_smoothing_w, Eigen::VectorXd R_betaR, Eigen::VectorXd R_betaF, Eigen::VectorXd R_logsmoothing, bool gaussian);
+RcppExport SEXP _drfDLNMadditive_drfDLNMadditivebuild(SEXP R_ySEXP, SEXP R_B_inner_listSEXP, SEXP R_knots_f_listSEXP, SEXP R_knots_w_listSEXP, SEXP R_Sw_listSEXP, SEXP R_SwR_listSEXP, SEXP R_Sf_listSEXP, SEXP R_SfR_listSEXP, SEXP R_XrandSEXP, SEXP R_XfixSEXP, SEXP R_Zf_listSEXP, SEXP R_XoffsetSEXP, SEXP R_rSEXP, SEXP R_alpha_fSEXP, SEXP R_log_thetaSEXP, SEXP R_log_smoothing_fSEXP, SEXP R_log_smoothing_wSEXP, SEXP R_betaRSEXP, SEXP R_betaFSEXP, SEXP R_logsmoothingSEXP, SEXP gaussianSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -37,7 +37,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Eigen::VectorXd >::type R_betaR(R_betaRSEXP);
     Rcpp::traits::input_parameter< Eigen::VectorXd >::type R_betaF(R_betaFSEXP);
     Rcpp::traits::input_parameter< Eigen::VectorXd >::type R_logsmoothing(R_logsmoothingSEXP);
-    rcpp_result_gen = Rcpp::wrap(drfDLNMadditivebuild(R_y, R_B_inner_list, R_knots_f_list, R_knots_w_list, R_Sw_list, R_SwR_list, R_Sf_list, R_SfR_list, R_Xrand, R_Xfix, R_Zf_list, R_Xoffset, R_r, R_alpha_f, R_log_theta, R_log_smoothing_f, R_log_smoothing_w, R_betaR, R_betaF, R_logsmoothing));
+    Rcpp::traits::input_parameter< bool >::type gaussian(gaussianSEXP);
+    rcpp_result_gen = Rcpp::wrap(drfDLNMadditivebuild(R_y, R_B_inner_list, R_knots_f_list, R_knots_w_list, R_Sw_list, R_SwR_list, R_Sf_list, R_SfR_list, R_Xrand, R_Xfix, R_Zf_list, R_Xoffset, R_r, R_alpha_f, R_log_theta, R_log_smoothing_f, R_log_smoothing_w, R_betaR, R_betaF, R_logsmoothing, gaussian));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -132,7 +133,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_drfDLNMadditive_drfDLNMadditivebuild", (DL_FUNC) &_drfDLNMadditive_drfDLNMadditivebuild, 20},
+    {"_drfDLNMadditive_drfDLNMadditivebuild", (DL_FUNC) &_drfDLNMadditive_drfDLNMadditivebuild, 21},
     {"_drfDLNMadditive_drfDLNMadditiveopt", (DL_FUNC) &_drfDLNMadditive_drfDLNMadditiveopt, 10},
     {"_drfDLNMadditive_drfDLNMadditiveCI", (DL_FUNC) &_drfDLNMadditive_drfDLNMadditiveCI, 6},
     {"_drfDLNMadditive_ConditionalAICdrfDLNMadditive", (DL_FUNC) &_drfDLNMadditive_ConditionalAICdrfDLNMadditive, 1},

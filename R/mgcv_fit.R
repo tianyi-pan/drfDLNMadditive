@@ -5,19 +5,34 @@
 #' @param sXdat
 #' @param M
 #' @param verbose
+#' @param family Outcome family, \code{"nb"} or \code{"gaussian"}.
+#' @param maxL.gaussian Maximum lag for Gaussian initialization, default 14.
 #'
 #' @returns
 #' @importFrom tsModel Lag
 #' @import mgcv
 #' @import dlnm
 #' @export
-mgcv_fit <- function(formula.list, x.names.list, sXdat, kE, kw, verbose) {
+mgcv_fit <- function(formula.list, x.names.list, sXdat, kE, kw, verbose,
+                     family = "nb", maxL.gaussian = 14) {
+
+  if (!is.character(family) || length(family) != 1L || is.na(family) ||
+      !family %in% c("nb", "gaussian")) {
+    stop('family must be "nb" or "gaussian".')
+  }
+  gaussian <- family == "gaussian"
+
 
   if(verbose) cat("Fitting a DRF-DLNM using mgcv package to obtain init ... \n")
   if(length(x.names.list) != 3) {
     error("not supported yet. TODO")
   }
-  colnames(sXdat)[which(colnames(sXdat) == unlist(x.names.list))] <- c("x1", "x2", "x3")
+  if (gaussian) {
+    maxL <- maxL.gaussian
+    colnames(sXdat)[match(unlist(x.names.list), colnames(sXdat))] <- c("x1", "x2", "x3")
+  } else {
+    colnames(sXdat)[which(colnames(sXdat) == unlist(x.names.list))] <- c("x1", "x2", "x3")
+  }
 
   Q1 <- Lag(sXdat$x1, 0:maxL)
   Q2 <- Lag(sXdat$x2, 0:maxL)
@@ -55,7 +70,7 @@ mgcv_fit <- function(formula.list, x.names.list, sXdat, kE, kw, verbose) {
 
   # make bam function verbose
   b.opt <- bam(formula.mgcv.pen,
-               family=nb(),
+               family=if (gaussian) stats::gaussian(link = "identity") else nb(),
                data = sXdat,
                paraPen=list(cb1=cbPengam1,
                             cb2=cbPengam2,

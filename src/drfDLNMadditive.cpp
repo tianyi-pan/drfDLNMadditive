@@ -77,7 +77,8 @@ List drfDLNMadditivebuild(const Eigen::VectorXd R_y,
                    Eigen::VectorXd R_log_smoothing_w,
                    Eigen::VectorXd R_betaR,
                    Eigen::VectorXd R_betaF,
-                   Eigen::VectorXd R_logsmoothing) {
+                   Eigen::VectorXd R_logsmoothing,
+                   bool gaussian = false) {
     // convert
     std::vector<Eigen::MatrixXd> R_B_inner_Eigen_list = convertListToVectorEigenMatrixXd(R_B_inner_list);
     std::vector<Eigen::VectorXd> R_knots_f_Eigen_list = convertListToVectorEigenVectorXd(R_knots_f_list);
@@ -93,7 +94,7 @@ List drfDLNMadditivebuild(const Eigen::VectorXd R_y,
                                     R_Sw_Eigen_list, R_SwR_Eigen_list, R_Sf_Eigen_list, R_SfR_Eigen_list,
                                     R_Xrand, R_Xfix, R_Zf_Eigen_list, R_Xoffset, R_r,
                                     R_alpha_f, R_log_theta, R_log_smoothing_f, R_log_smoothing_w,
-                                    R_betaR, R_betaF, R_logsmoothing);
+                                    R_betaR, R_betaF, R_logsmoothing, gaussian);
     Rcpp::XPtr<Model> ptr(modelobj_ptr);
 
 

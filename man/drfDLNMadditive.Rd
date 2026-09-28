@@ -31,7 +31,8 @@ drfDLNMadditive(
   eta = TRUE,
   maxit.LAML = 150,
   tmp.file = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  family = "nb"
 )
 }
 \arguments{
@@ -85,7 +86,12 @@ over-dispersion.}
 \item{CI.seed}{the random seed in the sampling method for CI, default 123.}
 
 \item{eta}{whether or not to report the CI for the linear predictor eta =
-log(mu), default \code{TRUE}.}
+log(mu) for NB or mu for Gaussian, default \code{TRUE}.}
+
+\item{family}{Outcome family: \code{"nb"} (default) or \code{"gaussian"}.
+Gaussian uses the identity link and theta is its standard deviation,
+optimized as log(theta), with default bounds [-4, 10]. Gaussian offsets
+are set to zero.}
 
 \item{verbose}{whether or not to print the progress and diagnostic
 information, such as the gradients and function values in inner and middle

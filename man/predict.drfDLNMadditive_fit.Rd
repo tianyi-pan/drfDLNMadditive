@@ -17,6 +17,10 @@
 
 \item{...}{}
 }
+\value{
+Predictions and intervals for the linear predictor: log(mu) for NB,
+or the mean mu for Gaussian. Gaussian offsets are zero.
+}
 \description{
 Title Obtain predictions from the fitted model by aceDLNM
 }

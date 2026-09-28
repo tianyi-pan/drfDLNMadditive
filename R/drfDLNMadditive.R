@@ -34,11 +34,13 @@
 #'   1000.
 #' @param CI.seed the random seed in the sampling method for CI, default 123.
 #' @param eta whether or not to report the CI for the linear predictor eta =
-#'   log(mu), default \code{TRUE}.
+#'   log(mu) for NB or mu for Gaussian, default \code{TRUE}.
 #' @param verbose whether or not to print the progress and diagnostic
 #'   information, such as the gradients and function values in inner and middle
 #'   optimizations.
-#'
+#' @param family outcome family: \code{"nb"} (default) for negative binomial
+#'   outcomes with a log link, or \code{"gaussian"} for Gaussian outcomes with
+#'   an identity link and variance theta squared.
 #' @return Object of class \code{drfDLNMadditive_fit}. S3 function \code{summary},
 #'   \code{residuals}, and \code{predict}.
 #' @importFrom mgcv s
@@ -65,7 +67,15 @@ drfDLNMadditive <- function(formula,
                     eta = TRUE,
                     maxit.LAML = 150,
                     tmp.file = NULL,
-                    verbose = TRUE) {
+                    verbose = TRUE,
+                    family = "nb") {
+
+  if (!is.character(family) || length(family) != 1L || is.na(family) ||
+      !family %in% c("nb", "gaussian")) {
+    stop('family must be "nb" or "gaussian".')
+  }
+  gaussian <- identical(family, "gaussian")
+
 
 
   formula.list <- list(formula = formula,
@@ -308,7 +318,7 @@ drfDLNMadditive <- function(formula,
   ### END following https://github.com/awstringer1/mam/blob/master/R/mam.R #######
 
   ## 2.4 offset
-  if(!is.null(offset)) {
+  if(!gaussian && !is.null(offset)) {
     Xoffset.original <- as.vector(stats::model.matrix(offset,data=sXdat)[,-1,drop=F])
     Xoffset.original.min <- min(Xoffset.original)
     Xoffset <- Xoffset.original - Xoffset.original.min
@@ -329,7 +339,7 @@ drfDLNMadditive <- function(formula,
 
 
   if(missingArg(upper.bound)) upper.bound <- c(10, rep(20, 2*M))
-  lower.bound <- c(-2,rep(-8, 2*M))
+  lower.bound <- c(ifelse(gaussian, -4, -2),rep(-8, 2*M))
 
   SS.list <- lapply(1:M, function(i) {
     E.max <- E.max.list[[i]]
@@ -472,7 +482,7 @@ drfDLNMadditive <- function(formula,
                                         Xoffset, r,
                                         alpha_f.init,
                                         log_theta.given, log_smoothing_f.given, log_smoothing_w.given,
-                                        betaR.init, betaF.init, logsmoothing.given)
+                                        betaR.init, betaF.init, logsmoothing.given, gaussian)
     }
     if(verbose) cat("Done.")
     mod.build
@@ -593,14 +603,31 @@ drfDLNMadditive <- function(formula,
         y.mean <- mean(sXdat$y, na.rm = TRUE)
 
         suppressWarnings(
-          mgcv.fit <- mgcv_fit(formula.list, x.names.list, sXdat, kE, kw, verbose)
+          mgcv.fit <- if (gaussian) {
+            mgcv_fit(formula.list, x.names.list, sXdat, kE, kw, verbose,
+                     family = family, maxL.gaussian = maxL)
+          } else {
+            mgcv_fit(formula.list, x.names.list, sXdat, kE, kw, verbose)
+          }
         )
-        mod.mgcv <- dDLNM.fit$mod.mgcv
+        if (gaussian) {
+          mod.mgcv <- mgcv.fit$mod.mgcv
+          sigma2 <- mod.mgcv$sig2
+          if (!is.finite(sigma2) || sigma2 <= 0) stop("Invalid Gaussian variance from bam().")
+          par.start[1] <- 0.5 * log(sigma2)
+          log.precision <- log(mod.mgcv$sp) - log(sigma2)
+          par.start[1 + (1:M)] <- log.precision[2*(1:M) - 1]
+          par.start[1 + M + (1:M)] <- log.precision[2*(1:M)]
+          if(length(par.start) > (1+(2*M))) par.start[(1+2*M+1):length(par.start)] <- log.precision[-c(1:(2*M))]
+          if(par.start[1] < -2) par.start[1] <- 0
+        } else {
+          mod.mgcv <- dDLNM.fit$mod.mgcv
 
-        par.start[1] <- family(mod.mgcv)$getTheta()
-        par.start[1 + (1:M)] <- log(mod.mgcv$sp)[2*(1:M) - 1]
-        par.start[1 + M + (1:M)] <- log(mod.mgcv$sp)[2*(1:M)]
-        if(length(par.start) > (1+(2*M))) par.start[(1+2*M+1):length(par.start)] <- log(mod.mgcv$sp)[-c(1:(2*M))]
+          par.start[1] <- family(mod.mgcv)$getTheta()
+          par.start[1 + (1:M)] <- log(mod.mgcv$sp)[2*(1:M) - 1]
+          par.start[1 + M + (1:M)] <- log(mod.mgcv$sp)[2*(1:M)]
+          if(length(par.start) > (1+(2*M))) par.start[(1+2*M+1):length(par.start)] <- log(mod.mgcv$sp)[-c(1:(2*M))]
+        }
 
         if(par.start[1] > 7) par.start[1] <- 7 # do not set a huge log(theta)
 
@@ -610,7 +637,7 @@ drfDLNMadditive <- function(formula,
         for (i in (1 + M + (1:M))) {
           if(par.start[i] > 15) par.start[i] <- 15
         }
-        for (i in 1:length(par.start)) {
+        for (i in (if (gaussian) 2:length(par.start) else 1:length(par.start))) {
           if((par.start[i] > (upper.bound[i] - 1)) | (par.start[i] < lower.bound[i])) par.start[i] <- 7
         }
         if(verbose) cat("Use results from dlnm package and mgcv::bam as the initial guess for BFGS.
@@ -836,6 +863,7 @@ drfDLNMadditive <- function(formula,
 
   if(!is.null(tmp.file)) {
     out.tmp <- structure(out, class = "drfDLNMadditive_fit")
+    out.tmp$family <- family
     save(out.tmp, file = tmp.file)
     cat("Temporary file saved to ", tmp.file, "\n")
   }
@@ -856,5 +884,6 @@ drfDLNMadditive <- function(formula,
   }
 
   
+  out$family <- family
   structure(out, class = "drfDLNMadditive_fit") # S3 class
 }

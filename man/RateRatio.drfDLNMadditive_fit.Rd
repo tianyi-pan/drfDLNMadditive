@@ -11,6 +11,9 @@
 
 \item{verbose}{whether to print messages during the process, default \code{FALSE}.}
 }
+\value{
+Rate ratios for NB models. Gaussian identity-link models are not supported.
+}
 \description{
 Title Rate Ratio for drfDLNMadditive_fit objects
 }

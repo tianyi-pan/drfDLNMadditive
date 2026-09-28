@@ -293,7 +293,8 @@ NCV.drfDLNMadditive_fit <- function(object, kNCV = 0, NCV.nthreads = 1, verbose 
   ### END following https://github.com/awstringer1/mam/blob/master/R/mam.R #######
 
 
-  Xoffset <- object$data$offset$Xoffset
+  gaussian <- identical(object$family, "gaussian")
+  Xoffset <- if (gaussian) rep(0, nrow(sXdat)) else object$data$offset$Xoffset
 
 
 
@@ -316,7 +317,7 @@ NCV.drfDLNMadditive_fit <- function(object, kNCV = 0, NCV.nthreads = 1, verbose 
                                     Xoffset, r,
                                     object$point$alpha_f,
                                     object$point$log_theta, object$point$log_smoothing_f, object$point$log_smoothing_w,
-                                    object$point$betaR, object$point$betaF, object$point$log_smoothing)
+                                    object$point$betaR, object$point$betaF, object$point$log_smoothing, gaussian)
 
   mod.address <- mod.build$address.eigen
 

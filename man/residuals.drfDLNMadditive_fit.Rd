@@ -29,7 +29,8 @@ observations is larger than nsample, default \code{1e4}.}
 \code{ggplot2::stat_smooth(method = "gam")}.}
 }
 \value{
-a list containing the randomized quantile residuals and the plots.
+a list containing residuals and plots. Gaussian residuals are
+standardized by the fitted SD; NB uses randomized quantile residuals.
 }
 \description{
 Title Randomized Quantile Residuals
