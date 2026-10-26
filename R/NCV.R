@@ -270,6 +270,9 @@ NCV.drfDLNMadditive_fit <- function(object, kNCV = 0, NCV.nthreads = 1, verbose 
     model.choice = "with.smooth"
   } else{
     model.choice = "without.smooth"
+    Xrand <- matrix(numeric(0), nrow(sXdat), 0)
+    Xfix <- matrix(numeric(0), nrow(sXdat), 0)
+    r <- numeric(0)
   }
 
 
