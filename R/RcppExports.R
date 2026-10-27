@@ -21,6 +21,10 @@ NCVdrfDLNMadditive <- function(ptr, nei_list, verbose = FALSE, nthreads = 1L) {
     .Call(`_drfDLNMadditive_NCVdrfDLNMadditive`, ptr, nei_list, verbose, nthreads)
 }
 
+SLdrfDLNMadditive <- function(ptr, ptr_cf, verbose = FALSE, aic = FALSE, nthreads = 1L, coef_samples = NULL) {
+    .Call(`_drfDLNMadditive_SLdrfDLNMadditive`, ptr, ptr_cf, verbose, aic, nthreads, coef_samples)
+}
+
 BsplinevecCon1st <- function(x, t, p, Z) {
     .Call(`_drfDLNMadditive_BsplinevecCon1st`, x, t, p, Z)
 }

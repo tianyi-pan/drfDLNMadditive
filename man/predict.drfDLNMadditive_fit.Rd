@@ -4,7 +4,7 @@
 \alias{predict.drfDLNMadditive_fit}
 \title{Title Obtain predictions from the fitted model by aceDLNM}
 \usage{
-\method{predict}{drfDLNMadditive_fit}(object, dat, CI.seed = 123, CI = 0.95, ...)
+\method{predict}{drfDLNMadditive_fit}(object, dat, CI.seed = 123, CI = 0.95, .build.only = FALSE, ...)
 }
 \arguments{
 \item{object}{object of class \code{drfDLNMadditive_fit}.}
@@ -14,6 +14,9 @@
 \item{CI.seed}{random seed for sampling, default \code{123}.}
 
 \item{CI}{confidence level, default \code{0.95}.}
+
+\item{.build.only}{Internal use by \code{SLdata()}: return the reconstructed
+model without drawing coefficient samples.}
 
 \item{...}{}
 }

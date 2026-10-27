@@ -7,11 +7,12 @@ Maintainer: Tianyi Pan <tianyi.pan@uwaterloo.ca>
 Description: Fit Additive DRF-DLNMs
 License: GPL (>= 3)
 Encoding: UTF-8
+Depends:
+    mgcv
 Imports: 
     Rcpp (>= 1.0.12),
     RcppEigen,
     Matrix,
-    mgcv,
 		ggplot2,
 		dplyr,
 		mDLNM
