@@ -870,9 +870,13 @@ List SLdrfDLNMadditive(SEXP ptr, SEXP ptr_cf, bool verbose = false, bool aic = f
   Eigen::MatrixXd X1(n, q);
   X1 << cf.Bf_matrix, cf.getXrand(), cf.getXfix();
   Eigen::VectorXd Xoffset1 = cf.getXoffset();
+  auto log_sum_exp = [](const Eigen::VectorXd& eta) {
+    double m = eta.maxCoeff();
+    return m + std::log((eta.array() - m).exp().sum());
+  };
   auto delta = [&](const Eigen::VectorXd& coef) {
-    return (X1 * coef + Xoffset1).array().exp().sum() /
-             (X * coef + Xoffset).array().exp().sum();
+    return std::exp(log_sum_exp(X1 * coef + Xoffset1) -
+                    log_sum_exp(X * coef + Xoffset));
   };
 
   modelobj.derivative_coef();
