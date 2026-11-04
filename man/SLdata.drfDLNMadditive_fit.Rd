@@ -23,20 +23,19 @@ the fitted reference records and model structure.}
 \item{verbose}{Whether to print progress.}
 
 \item{AIC.only}{Used by \code{mDLNM::AICdata()} to prepare AIC quantities
-and a coefficient-sample variance instead of pairwise predictions.}
+and a coefficient-sample variance instead of reusable SL data.}
 
-\item{nthreads}{Number of threads for deletion calculations, default \code{1}.
-Uses OpenMP for parallel calculation.}
+\item{nthreads}{Number of OpenMP threads for AIC deletion calculations,
+default \code{1}. SL jackknifing uses \code{SuperLearner(nworkers = ...)}.}
 
 \item{...}{Unused.}
 }
 \value{
 A list for \code{mDLNM::SuperLearner()}, containing outcomes, row IDs,
-  dispersion, leave-one-out means (\code{mu.loo}), leave-two-out means
-  (\code{mu.lto}), and full-data
-  and delete-one mortality ratios. The \code{estimand} field is \code{"ratio"}.
-  Rows of \code{mu.lto} identify the outer
-  deletion and columns identify the validation observation; its diagonal is NA.
+  dispersion, the full-data mortality ratio, and serializable model data.
+  The \code{estimand} field is \code{"ratio"}. CV predictions and delete-one
+  ratios are calculated on demand by \code{SuperLearner()}; no pairwise
+  prediction matrix is stored.
   With \code{AIC.only = TRUE}, returns the quantities described in
   \code{mDLNM::AICdata()} instead.
 }

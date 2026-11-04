@@ -960,40 +960,134 @@ List SLdrfDLNMadditive(SEXP ptr, SEXP ptr_cf, bool verbose = false, bool aic = f
                         Named("delta") = delta(beta), Named("delta.loo") = delta_loo,
                         Named("delta.sample") = delta_sample);
   }
-  Eigen::VectorXd mu_loo(n), delta_loo(n);
-  Eigen::MatrixXd mu_lto = Eigen::MatrixXd::Constant(n, n, NA_REAL);
-  for(int start = 0; start < n; start += 100) {
-    Rcpp::checkUserInterrupt();
-    int end = std::min(start + 100, n);
-    #ifdef _OPENMP
-      #pragma omp parallel num_threads(nthreads) if(nthreads > 1)
-    #endif
-    {
-      Model local_model(modelobj);
-      Eigen::VectorXd nei(1);
-      #ifdef _OPENMP
-        #pragma omp for schedule(static, 1)
-      #endif
-      for(int i = start; i < end; i++) {
-        nei(0) = i + 1;
-        Eigen::MatrixXd Hi = local_model.prepare_NCV(nei).topLeftCorner(q, q);
-        Eigen::MatrixXd Hminus = H - Hi;
-        Eigen::VectorXd beta_i = beta - Hminus.completeOrthogonalDecomposition().solve(K.col(i));
-        mu_loo(i) = exp(X.row(i).dot(beta_i) + Xoffset(i));
-        delta_loo(i) = delta(beta_i);
-        for(int j = i + 1; j < n; j++) {
-          nei(0) = j + 1;
-          Hminus = H - Hi - local_model.prepare_NCV(nei).topLeftCorner(q, q);
-          Eigen::VectorXd beta_ij = beta - Hminus.completeOrthogonalDecomposition().solve(K.col(i) + K.col(j));
-          mu_lto(i, j) = exp(X.row(j).dot(beta_ij) + Xoffset(j));
-          mu_lto(j, i) = exp(X.row(i).dot(beta_ij) + Xoffset(i));
-        }
-      }
-    }
-    if(verbose) {
-      Rcpp::Rcout << "Super Learner deletion: " << end << " / " << n << "\n";
+  Eigen::VectorXd weight = -(modelobj.d2logdensity_dmudmu_vec.array() *
+                              modelobj.mu.array().square() +
+                              modelobj.dlogdensity_dmu_vec.array() * modelobj.mu.array());
+  if(verbose) Rcpp::Rcout << "Super Learner preparation complete.\n";
+  return List::create(Named("X") = X, Named("X.c") = X1,
+                      Named("offset") = Xoffset, Named("offset.c") = Xoffset1,
+                      Named("beta") = beta, Named("H") = H, Named("score") = K,
+                      Named("weight") = weight, Named("delta") = delta(beta));
+}
+
+// One worker keeps only the linear predictors and full-fit deletion system.
+struct SLstate {
+  Eigen::MatrixXd X, Xc, H, score, score_fold;
+  Eigen::VectorXd offset, offsetc, beta, weight, mu;
+  std::vector<Eigen::MatrixXd> Hfold;
+  std::vector<std::vector<int>> rows;
+  std::vector<int> fold;
+  double delta;
+  int n, q;
+
+  SLstate(List data, IntegerVector fold_id) :
+    X(as<Eigen::MatrixXd>(data["X"])), Xc(as<Eigen::MatrixXd>(data["X.c"])),
+    H(as<Eigen::MatrixXd>(data["H"])), score(as<Eigen::MatrixXd>(data["score"])),
+    offset(as<Eigen::VectorXd>(data["offset"])),
+    offsetc(as<Eigen::VectorXd>(data["offset.c"])),
+    beta(as<Eigen::VectorXd>(data["beta"])),
+    weight(as<Eigen::VectorXd>(data["weight"])),
+    fold(as<std::vector<int>>(fold_id)), delta(as<double>(data["delta"])) {
+    n = X.rows();
+    q = X.cols();
+    if(fold.size()) {
+      int K = *std::max_element(fold.begin(), fold.end());
+      rows.resize(K);
+      for(int j = 0; j < n; j++) rows[fold[j] - 1].push_back(j);
     }
   }
-  return List::create(Named("mu.loo") = mu_loo, Named("mu.lto") = mu_lto,
-                      Named("delta") = delta(beta), Named("delta.loo") = delta_loo);
+
+  Eigen::MatrixXd hessian(int i) {
+    return weight(i) * X.row(i).transpose() * X.row(i);
+  }
+
+  double ratio(const Eigen::VectorXd& coef) {
+    Eigen::VectorXd eta = X * coef + offset;
+    Eigen::VectorXd etac = Xc * coef + offsetc;
+    double m = eta.maxCoeff(), mc = etac.maxCoeff();
+    return std::exp(mc + std::log((etac.array() - mc).exp().sum()) -
+                    m - std::log((eta.array() - m).exp().sum()));
+  }
+};
+
+// [[Rcpp::export]]
+List SLinit(List data, IntegerVector fold, Nullable<List> cache = R_NilValue) {
+  XPtr<SLstate> state(new SLstate(data, fold), true);
+  int n = state->n, q = state->q, K = state->rows.size();
+  List saved;
+  if(cache.isNotNull()) {
+    saved = List(cache.get());
+    state->mu = as<Eigen::VectorXd>(saved["mu"]);
+    state->score_fold = as<Eigen::MatrixXd>(saved["score.fold"]);
+    List Hfold = saved["H.fold"];
+    for(int v = 0; v < K; v++) state->Hfold.push_back(as<Eigen::MatrixXd>(Hfold[v]));
+  } else {
+    state->mu.resize(n);
+    state->score_fold = Eigen::MatrixXd::Zero(q, K);
+    List Hfold(K);
+    if(K) {
+      state->Hfold.assign(K, Eigen::MatrixXd::Zero(q, q));
+      for(int j = 0; j < n; j++) {
+        if(j % 100 == 0) Rcpp::checkUserInterrupt();
+        int v = state->fold[j] - 1;
+        state->Hfold[v] += state->hessian(j);
+        state->score_fold.col(v) += state->score.col(j);
+      }
+      for(int v = 0; v < K; v++) {
+        Rcpp::checkUserInterrupt();
+        Eigen::VectorXd coef = state->beta - (state->H - state->Hfold[v])
+          .completeOrthogonalDecomposition().solve(state->score_fold.col(v));
+        for(int j : state->rows[v]) {
+          state->mu(j) = std::exp(state->X.row(j).dot(coef) + state->offset(j));
+        }
+        Hfold[v] = state->Hfold[v];
+      }
+    } else {
+      for(int j = 0; j < n; j++) {
+        if(j % 100 == 0) Rcpp::checkUserInterrupt();
+        Eigen::VectorXd coef = state->beta - (state->H - state->hessian(j))
+          .completeOrthogonalDecomposition().solve(state->score.col(j));
+        state->mu(j) = std::exp(state->X.row(j).dot(coef) + state->offset(j));
+      }
+    }
+    saved = List::create(Named("mu") = state->mu, Named("H.fold") = Hfold,
+                         Named("score.fold") = state->score_fold);
+  }
+  return List::create(Named("ptr") = state, Named("mu") = state->mu,
+                      Named("delta") = state->delta, Named("cache") = saved);
+}
+
+// [[Rcpp::export]]
+List SLdelete(SEXP ptr, int i) {
+  XPtr<SLstate> state(ptr);
+  int n = state->n, K = state->rows.size();
+  i--;
+  Eigen::MatrixXd Hi = state->hessian(i);
+  Eigen::VectorXd coef = state->beta - (state->H - Hi)
+    .completeOrthogonalDecomposition().solve(state->score.col(i));
+  double delta = state->ratio(coef);
+  Eigen::VectorXd mu(n - 1);
+  if(K) {
+    for(int v = 0; v < K; v++) {
+      Rcpp::checkUserInterrupt();
+      if(v != state->fold[i] - 1) {
+        coef = state->beta - (state->H - state->Hfold[v] - Hi)
+          .completeOrthogonalDecomposition().solve(state->score_fold.col(v) + state->score.col(i));
+      }
+      for(int j : state->rows[v]) {
+        if(j == i) continue;
+        mu(j - (j > i)) = v == state->fold[i] - 1 ? state->mu(j) :
+          std::exp(state->X.row(j).dot(coef) + state->offset(j));
+      }
+    }
+  } else {
+    for(int j = 0; j < n; j++) {
+      if(j % 100 == 0) Rcpp::checkUserInterrupt();
+      if(j == i) continue;
+      coef = state->beta - (state->H - Hi - state->hessian(j))
+        .completeOrthogonalDecomposition().solve(state->score.col(i) + state->score.col(j));
+      mu(j - (j > i)) = std::exp(state->X.row(j).dot(coef) + state->offset(j));
+    }
+  }
+  return List::create(Named("mu") = mu, Named("delta") = delta);
 }

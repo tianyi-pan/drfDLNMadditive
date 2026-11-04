@@ -6,9 +6,9 @@
 #'   the fitted reference records and model structure.
 #' @param verbose Whether to print progress.
 #' @param AIC.only Used by \code{mDLNM::AICdata()} to prepare AIC quantities
-#'   and a coefficient-sample variance instead of pairwise predictions.
-#' @param nthreads Number of threads for deletion calculations, default \code{1}.
-#'   Uses OpenMP for parallel calculation.
+#'   and a coefficient-sample variance instead of reusable SL data.
+#' @param nthreads Number of OpenMP threads for AIC deletion calculations,
+#'   default \code{1}. SL jackknifing uses \code{SuperLearner(nworkers = ...)}.
 #' @param ... Unused.
 #' @exportS3Method mDLNM::SLdata
 SLdata.drfDLNMadditive_fit <- function(object, dat.c, verbose = FALSE,
@@ -55,7 +55,6 @@ SLdata.drfDLNMadditive_fit <- function(object, dat.c, verbose = FALSE,
                 estimand = "ratio"))
   }
   return(list(y = dat$y, row.id = rownames(object$modeldata), theta = theta,
-              mu.loo = as.vector(out$mu.loo), mu.lto = out$mu.lto,
-              delta = out$delta, delta.loo = as.vector(out$delta.loo),
+              delta = out$delta, data = out, package = "drfDLNMadditive",
               estimand = "ratio"))
 }
